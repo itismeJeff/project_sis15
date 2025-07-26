@@ -1,0 +1,130 @@
+﻿@{
+    ViewData["Title"] = "Inicio";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Sistema de Gestión de Clientes</h1>
+    <p class="lead">Universidad Internacional de las Américas</p>
+</div>
+
+<div class="row">
+    <!-- Formulario de Cliente -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Registrar Nuevo Cliente</h5>
+            </div>
+            <div class="card-body">
+                <form id="clienteForm">
+                    <div class="mb-3">
+                        <label for="cedula" class="form-label">Cédula *</label>
+                        <input type="text" class="form-control" id="cedula" name="cedula" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre *</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="apellido1" class="form-label">Primer Apellido *</label>
+                        <input type="text" class="form-control" id="apellido1" name="apellido1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="apellido2" class="form-label">Segundo Apellido *</label>
+                        <input type="text" class="form-control" id="apellido2" name="apellido2" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Registrar Cliente</button>
+                </form>
+                <div id="mensaje" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Clientes -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Lista de Clientes</h5>
+                <button class="btn btn-sm btn-outline-primary" onclick="cargarClientes()">Actualizar</button>
+            </div>
+            <div class="card-body">
+                <div id="tablaClientes">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Cédula</th>
+                                <th>Nombre</th>
+                                <th>Apellidos</th>
+                                <th>Fecha Registro</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clientesBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            cargarClientes();
+            
+            $('#clienteForm').on('submit', function(e) {
+                e.preventDefault();
+                registrarCliente();
+            });
+        });
+
+        function registrarCliente() {
+            const cliente = {
+                cedula: $('#cedula').val(),
+                nombre: $('#nombre').val(),
+                apellido1: $('#apellido1').val(),
+                apellido2: $('#apellido2').val()
+            };
+
+            $.ajax({
+                url: '/api/Clientes',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(cliente),
+                success: function(response) {
+                    $('#mensaje').html('<div class="alert alert-success">Cliente registrado exitosamente</div>');
+                    $('#clienteForm')[0].reset();
+                    cargarClientes();
+                },
+                error: function(xhr) {
+                    let mensaje = 'Error al registrar cliente';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        mensaje = xhr.responseJSON.message;
+                    }
+                    $('#mensaje').html('<div class="alert alert-danger">' + mensaje + '</div>');
+                }
+            });
+        }
+
+        function cargarClientes() {
+            $.ajax({
+                url: '/api/Clientes',
+                type: 'GET',
+                success: function(clientes) {
+                    let html = '';
+                    clientes.forEach(function(cliente) {
+                        html += '<tr>';
+                        html += '<td>' + cliente.cedula + '</td>';
+                        html += '<td>' + cliente.nombre + '</td>';
+                        html += '<td>' + cliente.apellido1 + ' ' + cliente.apellido2 + '</td>';
+                        html += '<td>' + new Date(cliente.fechaRegistro).toLocaleDateString() + '</td>';
+                        html += '</tr>';
+                    });
+                    $('#clientesBody').html(html);
+                },
+                error: function() {
+                    $('#clientesBody').html('<tr><td colspan="4" class="text-center">Error al cargar clientes</td></tr>');
+                }
+            });
+        }
+    </script>
+}

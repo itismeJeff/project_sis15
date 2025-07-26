@@ -1,0 +1,144 @@
+@{
+    ViewData["Title"] = "Exportar Datos";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Exportar Datos de Clientes</h1>
+    <p class="lead">Exporta los datos de clientes en diferentes formatos</p>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Exportar a XML</h5>
+            </div>
+            <div class="card-body">
+                <p>Descarga los datos de clientes en formato XML.</p>
+                <button class="btn btn-primary" onclick="exportarXML()">
+                    <i class="fas fa-download"></i> Exportar XML
+                </button>
+                <div id="xmlResult" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Exportar a JSON</h5>
+            </div>
+            <div class="card-body">
+                <p>Descarga los datos de clientes en formato JSON.</p>
+                <button class="btn btn-success" onclick="exportarJSON()">
+                    <i class="fas fa-download"></i> Exportar JSON
+                </button>
+                <div id="jsonResult" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Vista Previa de Datos</h5>
+            </div>
+            <div class="card-body">
+                <div id="vistaPrevia">
+                    <p class="text-muted">Los datos se cargarán automáticamente...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            cargarVistaPrevia();
+        });
+
+        function exportarXML() {
+            $.ajax({
+                url: '/api/Clientes/export/xml',
+                type: 'GET',
+                success: function(data) {
+                    // Crear y descargar archivo XML
+                    const blob = new Blob([data], { type: 'application/xml' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'clientes.xml';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    $('#xmlResult').html('<div class="alert alert-success">Archivo XML exportado exitosamente</div>');
+                },
+                error: function() {
+                    $('#xmlResult').html('<div class="alert alert-danger">Error al exportar XML</div>');
+                }
+            });
+        }
+
+        function exportarJSON() {
+            $.ajax({
+                url: '/api/Clientes/export/json',
+                type: 'GET',
+                success: function(data) {
+                    // Crear y descargar archivo JSON
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'clientes.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    $('#jsonResult').html('<div class="alert alert-success">Archivo JSON exportado exitosamente</div>');
+                },
+                error: function() {
+                    $('#jsonResult').html('<div class="alert alert-danger">Error al exportar JSON</div>');
+                }
+            });
+        }
+
+        function cargarVistaPrevia() {
+            $.ajax({
+                url: '/api/Clientes',
+                type: 'GET',
+                success: function(clientes) {
+                    if (clientes.length === 0) {
+                        $('#vistaPrevia').html('<p class="text-muted">No hay clientes registrados</p>');
+                        return;
+                    }
+                    
+                    let html = '<table class="table table-striped">';
+                    html += '<thead><tr><th>ID</th><th>Cédula</th><th>Nombre</th><th>Apellidos</th><th>Fecha Registro</th></tr></thead>';
+                    html += '<tbody>';
+                    
+                    clientes.forEach(function(cliente) {
+                        html += '<tr>';
+                        html += '<td>' + cliente.id + '</td>';
+                        html += '<td>' + cliente.cedula + '</td>';
+                        html += '<td>' + cliente.nombre + '</td>';
+                        html += '<td>' + cliente.apellido1 + ' ' + cliente.apellido2 + '</td>';
+                        html += '<td>' + new Date(cliente.fechaRegistro).toLocaleDateString() + '</td>';
+                        html += '</tr>';
+                    });
+                    
+                    html += '</tbody></table>';
+                    $('#vistaPrevia').html(html);
+                },
+                error: function() {
+                    $('#vistaPrevia').html('<div class="alert alert-danger">Error al cargar los datos</div>');
+                }
+            });
+        }
+    </script>
+} 
